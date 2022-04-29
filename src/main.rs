@@ -33,12 +33,20 @@ struct CliArgs {
 
     #[clap()]
     file: PathBuf,
+
+    /// Rename original file to file~ before replacing
+    #[clap(short, long)]
+    backup: bool,
 }
 
 fn main() {
     let args = CliArgs::parse();
 
     let content = io::read_file(&args.file);
+
+    if args.backup {
+        io::peform_backup(&args.file, &content);
+    }
 
     let replacer = StdTextReplacer {};
     let new_content = replacer.replace(&args.from, &args.to, &content);
