@@ -20,6 +20,8 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
+use rrpl::{StdTextReplacer, TextReplacer};
+
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct CliArgs {
@@ -38,7 +40,8 @@ fn main() {
 
     let content = io::read_file(&args.file);
 
-    let new_content = rrpl::rreplace(&content, &args.from, &args.to);
+    let replacer = StdTextReplacer {};
+    let new_content = replacer.replace(&args.from, &args.to, &content);
 
     io::write_file(&args.file, &new_content);
 }
