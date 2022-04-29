@@ -8,3 +8,5 @@ authors = ["Krzysztof Hrynczenko <jeniopy@gmail.com>"]
 
 [dependencies]
 clap = { version = "^3.1.8", features = ["derive"] }
+log = "0.4.16"
+simplelog = "^0.12.0"

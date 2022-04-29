@@ -19,6 +19,7 @@ mod rrpl;
 use std::path::PathBuf;
 
 use clap::Parser;
+use simplelog::{ColorChoice, Config, LevelFilter, TermLogger, TerminalMode};
 
 use rrpl::{StdTextReplacer, TextReplacer};
 
@@ -37,10 +38,32 @@ struct CliArgs {
     /// Rename original file to file~ before replacing
     #[clap(short, long)]
     backup: bool,
+
+    /// Disable logging to stdout/stderr
+    #[clap(short, long)]
+    quiet: bool,
+}
+
+fn initialize_logger(quiet: bool) {
+    let level_filter = if quiet {
+        LevelFilter::Error
+    } else {
+        LevelFilter::Info
+    };
+
+    TermLogger::init(
+        level_filter,
+        Config::default(),
+        TerminalMode::Mixed,
+        ColorChoice::Auto,
+    )
+    .unwrap();
 }
 
 fn main() {
     let args = CliArgs::parse();
+
+    initialize_logger(args.quiet);
 
     let content = io::read_file(&args.file);
 
