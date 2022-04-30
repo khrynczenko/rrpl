@@ -21,6 +21,8 @@ use std::path::PathBuf;
 use clap::Parser;
 use simplelog::{ColorChoice, Config, LevelFilter, TermLogger, TerminalMode};
 
+#[allow(clippy::struct_excessive_bools)]
+// ^ This is one-to-one repr of CLI arguments so it is okay to do that
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct CliArgs {
@@ -44,6 +46,10 @@ struct CliArgs {
     /// Disable logging to stdout/stderr
     #[clap(short, long)]
     quiet: bool,
+
+    /// Match on word boundaries only
+    #[clap(short, long)]
+    whole_words: bool,
 }
 
 fn initialize_logger(quiet: bool) {
@@ -73,7 +79,7 @@ fn main() {
             io::peform_backup(&path, &content);
         }
 
-        let replacer = rrpl::make_text_replacer(args.ignore_case.into());
+        let replacer = rrpl::make_text_replacer(args.ignore_case.into(), args.whole_words.into());
         let new_content = replacer.replace(&args.from, &args.to, &content);
         io::write_file(&path, &new_content);
     }
