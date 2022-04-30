@@ -30,8 +30,8 @@ struct CliArgs {
     #[clap()]
     to: String,
 
-    #[clap()]
-    file: PathBuf,
+    #[clap(name = "FILE")]
+    files: Vec<PathBuf>,
 
     /// Rename original file to file~ before replacing
     #[clap(short, long)]
@@ -67,14 +67,14 @@ fn main() {
 
     initialize_logger(args.quiet);
 
-    let content = io::read_file(&args.file);
+    for path in args.files {
+        let content = io::read_file(&path);
+        if args.backup {
+            io::peform_backup(&path, &content);
+        }
 
-    if args.backup {
-        io::peform_backup(&args.file, &content);
+        let replacer = rrpl::make_text_replacer(args.ignore_case.into());
+        let new_content = replacer.replace(&args.from, &args.to, &content);
+        io::write_file(&path, &new_content);
     }
-
-    let replacer = rrpl::make_text_replacer(args.ignore_case.into());
-    let new_content = replacer.replace(&args.from, &args.to, &content);
-
-    io::write_file(&args.file, &new_content);
 }
