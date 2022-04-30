@@ -21,8 +21,6 @@ use std::path::PathBuf;
 use clap::Parser;
 use simplelog::{ColorChoice, Config, LevelFilter, TermLogger, TerminalMode};
 
-use rrpl::{StdTextReplacer, TextReplacer};
-
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct CliArgs {
@@ -38,6 +36,10 @@ struct CliArgs {
     /// Rename original file to file~ before replacing
     #[clap(short, long)]
     backup: bool,
+
+    /// Match case-insensitively
+    #[clap(short, long)]
+    ignore_case: bool,
 
     /// Disable logging to stdout/stderr
     #[clap(short, long)]
@@ -71,7 +73,7 @@ fn main() {
         io::peform_backup(&args.file, &content);
     }
 
-    let replacer = StdTextReplacer {};
+    let replacer = rrpl::make_text_replacer(args.ignore_case.into());
     let new_content = replacer.replace(&args.from, &args.to, &content);
 
     io::write_file(&args.file, &new_content);
