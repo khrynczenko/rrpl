@@ -45,6 +45,10 @@ struct CliArgs {
     #[clap(short, long)]
     ignore_case: bool,
 
+    /// Prompt confirmation before changing the file
+    #[clap(short, long)]
+    prompt: bool,
+
     /// Disable logging to stdout/stderr
     #[clap(short, long)]
     quiet: bool,
@@ -70,6 +74,24 @@ fn initialize_logger(quiet: bool) {
     .unwrap();
 }
 
+fn ask_for_confirmation() -> bool {
+    println!("Do you want to replace matches in this file? (y/n)");
+    let mut answer = String::new();
+    while answer.to_lowercase() != "y\n" && answer.to_lowercase() != "n\n" {
+        answer.clear();
+        std::io::stdin().read_line(&mut answer).unwrap_or_else(|e| {
+            log::error!("{}", e);
+            std::process::exit(1);
+        });
+    }
+
+    match answer.as_ref() {
+        "y\n" => true,
+        "n\n" => false,
+        _ => panic!("impossible answer"),
+    }
+}
+
 fn main() {
     let args = CliArgs::parse();
 
@@ -84,6 +106,15 @@ fn main() {
         let replacer = rrpl::make_text_replacer(args.ignore_case.into(), args.whole_words.into());
         let (new_content, occurences) = replacer.replace(&args.from, &args.to, &content);
         log::info!("Found {} matches in {:#?}", occurences, path);
-        io::write_file(&path, &new_content);
+
+        let write_to_file_confirmed = if args.prompt {
+            ask_for_confirmation()
+        } else {
+            true
+        };
+
+        if write_to_file_confirmed {
+            io::write_file(&path, &new_content);
+        }
     }
 }
