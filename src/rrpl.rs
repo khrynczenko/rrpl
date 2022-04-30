@@ -1,7 +1,9 @@
 use regex::Regex;
 
+pub type Occurrences = usize;
+
 pub trait TextReplacer {
-    fn replace(&self, from: &str, to: &str, text: &str) -> String;
+    fn replace(&self, from: &str, to: &str, text: &str) -> (String, Occurrences);
 }
 
 #[derive(Debug, PartialEq)]
@@ -40,8 +42,9 @@ impl From<bool> for CaseInsensitivity {
 pub struct StdTextReplacer {}
 
 impl TextReplacer for StdTextReplacer {
-    fn replace(&self, from: &str, to: &str, text: &str) -> String {
-        text.replace(from, to)
+    fn replace(&self, from: &str, to: &str, text: &str) -> (String, Occurrences) {
+        let occurences = text.matches(from).into_iter().count();
+        (text.replace(from, to), occurences)
     }
 }
 
@@ -71,7 +74,7 @@ impl Default for RegexTextReplacer {
 }
 
 impl TextReplacer for RegexTextReplacer {
-    fn replace(&self, from: &str, to: &str, text: &str) -> String {
+    fn replace(&self, from: &str, to: &str, text: &str) -> (String, Occurrences) {
         let re = match (&self.case_insensitivity, &self.whole_words) {
             (CaseInsensitivity::Enabled, WholeWordsOnly::Enabled) => {
                 Regex::new(&format!(r"(?i)\b{}", from)).unwrap()
@@ -84,8 +87,12 @@ impl TextReplacer for RegexTextReplacer {
             }
             (CaseInsensitivity::Disabled, WholeWordsOnly::Disabled) => Regex::new(from).unwrap(),
         };
+        let occurences = re.captures_iter(text).count();
 
-        return re.replace_all(text, String::from(to)).to_string();
+        return (
+            re.replace_all(text, String::from(to)).to_string(),
+            occurences,
+        );
     }
 }
 
@@ -118,7 +125,7 @@ mod tests {
             let from = "words";
             let to = "souce";
 
-            let expected_output = String::from("Some text with some souce");
+            let expected_output = (String::from("Some text with some souce"), 1);
 
             assert_eq!(
                 StdTextReplacer::default().replace(from, to, text),
@@ -132,7 +139,7 @@ mod tests {
             let from = "words";
             let to = "souce";
 
-            let expected_output = String::from("nothing to replace here");
+            let expected_output = (String::from("nothing to replace here"), 0);
 
             assert_eq!(
                 StdTextReplacer::default().replace(from, to, text),
@@ -146,7 +153,7 @@ mod tests {
             let from = "words";
             let to = "souce";
 
-            let expected_output = String::from("");
+            let expected_output = (String::from(""), 0);
 
             assert_eq!(
                 StdTextReplacer::default().replace(from, to, text),
@@ -164,7 +171,7 @@ mod tests {
             let from = "words";
             let to = "souce";
 
-            let expected_output = String::from("Some text with some souce");
+            let expected_output = (String::from("Some text with some souce"), 1);
 
             assert_eq!(
                 RegexTextReplacer::default().replace(from, to, text),
@@ -178,8 +185,10 @@ mod tests {
             let from = "words";
             let to = "souce";
 
-            let expected_output =
-                String::from("Some text with some souce, souce. But not xwordsx.");
+            let expected_output = (
+                String::from("Some text with some souce, souce. But not xwordsx."),
+                2,
+            );
 
             let replacer =
                 RegexTextReplacer::new(CaseInsensitivity::Disabled, WholeWordsOnly::Enabled);
@@ -193,7 +202,10 @@ mod tests {
             let from = "words";
             let to = "souce";
 
-            let expected_output = String::from("Some text with some souce, souce, and other souce");
+            let expected_output = (
+                String::from("Some text with some souce, souce, and other souce"),
+                3,
+            );
 
             let replacer =
                 RegexTextReplacer::new(CaseInsensitivity::Enabled, WholeWordsOnly::Disabled);
@@ -207,7 +219,7 @@ mod tests {
             let from = "words";
             let to = "souce";
 
-            let expected_output = String::from("nothing to replace here");
+            let expected_output = (String::from("nothing to replace here"), 0);
 
             assert_eq!(
                 RegexTextReplacer::default().replace(from, to, text),
@@ -221,7 +233,7 @@ mod tests {
             let from = "words";
             let to = "souce";
 
-            let expected_output = String::from("");
+            let expected_output = (String::from(""), 0);
 
             assert_eq!(
                 RegexTextReplacer::default().replace(from, to, text),

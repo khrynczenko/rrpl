@@ -26,6 +26,7 @@ use simplelog::{ColorChoice, Config, LevelFilter, TermLogger, TerminalMode};
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct CliArgs {
+    // REQUIRED ARGUMENTS
     #[clap()]
     from: String,
 
@@ -35,6 +36,7 @@ struct CliArgs {
     #[clap(name = "FILE")]
     files: Vec<PathBuf>,
 
+    // OPTIONS
     /// Rename original file to file~ before replacing
     #[clap(short, long)]
     backup: bool,
@@ -80,7 +82,8 @@ fn main() {
         }
 
         let replacer = rrpl::make_text_replacer(args.ignore_case.into(), args.whole_words.into());
-        let new_content = replacer.replace(&args.from, &args.to, &content);
+        let (new_content, occurences) = replacer.replace(&args.from, &args.to, &content);
+        log::info!("Found {} matches in {:#?}", occurences, path);
         io::write_file(&path, &new_content);
     }
 }
