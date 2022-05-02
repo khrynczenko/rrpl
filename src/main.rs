@@ -16,6 +16,7 @@
 mod io;
 mod rrpl;
 
+use std::path::Path;
 use std::path::PathBuf;
 
 use clap::Parser;
@@ -58,6 +59,16 @@ struct CliArgs {
     whole_words: bool,
 }
 
+fn main() {
+    let args = CliArgs::parse();
+
+    initialize_logger(args.quiet);
+
+    for path in &args.files {
+        run_replacement(path, &args);
+    }
+}
+
 fn initialize_logger(quiet: bool) {
     let level_filter = if quiet {
         LevelFilter::Error
@@ -74,10 +85,31 @@ fn initialize_logger(quiet: bool) {
     .unwrap();
 }
 
+fn run_replacement(path: &Path, args: &CliArgs) {
+    let content = io::read_file(&path);
+    if args.backup {
+        io::peform_backup(&path, &content);
+    }
+
+    let replacer = rrpl::make_text_replacer(args.ignore_case.into(), args.whole_words.into());
+    let (new_content, occurences) = replacer.replace(&args.from, &args.to, &content);
+    log::info!("Found {} matches in {:#?}", occurences, path);
+
+    let write_to_file_confirmed = if args.prompt {
+        ask_for_confirmation()
+    } else {
+        true
+    };
+
+    if write_to_file_confirmed {
+        io::write_file(&path, &new_content);
+    }
+}
+
 fn ask_for_confirmation() -> bool {
     println!("Do you want to replace matches in this file? (y/n)");
     let mut answer = String::new();
-    while answer.to_lowercase() != "y\n" && answer.to_lowercase() != "n\n" {
+    while !["y\n", "n\n"].contains(&answer.to_lowercase().as_str()) {
         answer.clear();
         std::io::stdin().read_line(&mut answer).unwrap_or_else(|e| {
             log::error!("{}", e);
@@ -89,32 +121,5 @@ fn ask_for_confirmation() -> bool {
         "y\n" => true,
         "n\n" => false,
         _ => panic!("impossible answer"),
-    }
-}
-
-fn main() {
-    let args = CliArgs::parse();
-
-    initialize_logger(args.quiet);
-
-    for path in args.files {
-        let content = io::read_file(&path);
-        if args.backup {
-            io::peform_backup(&path, &content);
-        }
-
-        let replacer = rrpl::make_text_replacer(args.ignore_case.into(), args.whole_words.into());
-        let (new_content, occurences) = replacer.replace(&args.from, &args.to, &content);
-        log::info!("Found {} matches in {:#?}", occurences, path);
-
-        let write_to_file_confirmed = if args.prompt {
-            ask_for_confirmation()
-        } else {
-            true
-        };
-
-        if write_to_file_confirmed {
-            io::write_file(&path, &new_content);
-        }
     }
 }
