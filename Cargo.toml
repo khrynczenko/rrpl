@@ -3,11 +3,16 @@ name = "rrpl"
 version = "0.1.0"
 edition = "2021"
 authors = ["Krzysztof Hrynczenko <jeniopy@gmail.com>"]
+license = "MIT"
+description = "A command line tool for replacing strings in files."
+readme = "README.md"
+repository = "https://github.com/khrynczenko/rrpl"
+categories = ["command-line-utilities", "text-processing"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 clap = { version = "^3.1.8", features = ["derive"] }
-log = "0.4.16"
+log = "^0.4.16"
 simplelog = "^0.12.0"
 regex = "^1.5.5"
