@@ -1,7 +1,10 @@
 # rrpl
 
-![GitHub Workflow Status](
-https://img.shields.io/github/workflow/status/khrynczenko/rrpl/rust,%20cargo)
+---
+
+![CICD](
+https://img.shields.io/github/workflow/status/khrynczenko/rrpl/rust,%20cargo) ![Crates.io](https://img.shields.io/crates/v/rrpl) ![GitHub](https://img.shields.io/github/license/khrynczenko/rrpl)
+
 
 ## What is **rrpl**
 
